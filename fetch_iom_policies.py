@@ -53,23 +53,48 @@ def get_keychain_password(service: str, account: str, profile: Optional[str] = N
     return None
 
 
-def main():
+def get_credentials():
+    """Resolve credentials from environment variables or macOS Keychain.
+
+    Priority:
+      1. Environment variables: FALCON_CLIENT_ID, FALCON_CLIENT_SECRET, FALCON_CLOUD_REGION
+      2. macOS Keychain via CID profile
+    """
+    client_id = os.getenv('FALCON_CLIENT_ID')
+    client_secret = os.getenv('FALCON_CLIENT_SECRET')
+    region = os.getenv('FALCON_CLOUD_REGION', '')
+
+    if client_id and client_secret:
+        print("Using credentials from environment variables")
+        return client_id, client_secret, region or 'us-1'
+
+    # Fall back to macOS Keychain
     profile = get_falcon_profile()
     print(f"Profile: {profile}")
-
     client_id = get_keychain_password("falcon-client-id", "client-id", profile)
     client_secret = get_keychain_password("falcon-client-secret", "client-secret", profile)
-    region = get_keychain_password("falcon-cloud-region", "region", profile)
+    region = get_keychain_password("falcon-cloud-region", "region", profile) or 'us-1'
 
     if not client_id or not client_secret:
-        print(f"Credentials not found for profile: {profile}")
+        print("Credentials not found.")
+        print("\nProvide credentials via environment variables:")
+        print("  export FALCON_CLIENT_ID=your_client_id")
+        print("  export FALCON_CLIENT_SECRET=your_client_secret")
+        print("  export FALCON_CLOUD_REGION=us-1  # optional, defaults to us-1")
+        print("\nOr via macOS Keychain (see README).")
         sys.exit(1)
+
+    return client_id, client_secret, region
+
+
+def main():
+    client_id, client_secret, region = get_credentials()
 
     base_url = "https://api.crowdstrike.com"
     if region and region != "us-1":
         base_url = f"https://api.{region}.crowdstrike.com"
 
-    print(f"Region: {region or 'us-1'}")
+    print(f"Region: {region}")
     print("Authenticating...")
 
     falcon = CSPMRegistration(client_id=client_id, client_secret=client_secret, base_url=base_url)

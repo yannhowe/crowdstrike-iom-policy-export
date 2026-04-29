@@ -46,7 +46,7 @@ Queries the Falcon CSPM API via `CSPMRegistration.get_policy_settings()` to retr
 
 - Python 3.8+
 - [FalconPy](https://github.com/CrowdStrike/falconpy) SDK
-- macOS Keychain with Falcon API credentials (or modify auth to suit your environment)
+- Falcon API credentials (environment variables or macOS Keychain)
 
 ### Install FalconPy
 
@@ -58,7 +58,19 @@ pip install crowdstrike-falconpy
 
 ### Credentials
 
-The script reads Falcon API credentials from macOS Keychain. Store them with:
+Credentials are resolved in this order:
+
+#### Option 1: Environment variables (recommended for CI/CD and non-macOS)
+
+```bash
+export FALCON_CLIENT_ID=your_client_id
+export FALCON_CLIENT_SECRET=your_client_secret
+export FALCON_CLOUD_REGION=us-1  # optional, defaults to us-1
+```
+
+Supported regions: `us-1`, `us-2`, `eu-1`, `us-gov-1`
+
+#### Option 2: macOS Keychain
 
 ```bash
 security add-generic-password -s "falcon-client-id" -a "default" -w "YOUR_CLIENT_ID" -U
